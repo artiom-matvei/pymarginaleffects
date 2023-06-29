@@ -2,7 +2,7 @@ import polars as pl
 from .estimands import * 
 
 
-def sanitize_newdata(model, newdata):
+def sanitize_newdata(model, newdata, wts = None):
     if newdata is None:
         out = model.model.data.frame
     try:
@@ -13,6 +13,10 @@ def sanitize_newdata(model, newdata):
     if any(x in reserved for x in out.columns):
         reserved = ", ".join(reserved)
         raise ValueError("These column names are reserved and must not appear in `newdata`: {reserved}")
+    if wts is not None:
+        if isinstance(wts, str) is False or wts not in out.columns:
+            raise ValueError("`wts` must be a column name in `newdata`.")
+        out = out.with_columns(wts)
     return out
 
 
@@ -36,18 +40,3 @@ def sanitize_vcov(vcov, model):
     except:
         pass
     return V
-
-def sanitize_newdata(model, newdata):
-    if newdata is None:
-        newdata = model.model.data.frame
-    try:
-        out = pl.from_pandas(newdata)
-    except:
-        out = newdata
-    
-    if "rowid" in out.columns:
-        raise ValueError("The newdata has a column named 'rowid', which is not allowed.")
-    else:
-        out = out.with_columns(pl.Series(range(out.height), dtype = pl.Int32).alias("rowid"))
-
-    return out

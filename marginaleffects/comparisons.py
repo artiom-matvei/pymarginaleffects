@@ -17,33 +17,6 @@ import statsmodels.formula.api as smf
 import statsmodels.api as sm
 
 
-def convert_int_columns_to_float32(dfs: list) -> list:
-    numeric_types = [
-        pl.Int8,
-        pl.Int16,
-        pl.Int32,
-        pl.Int64,
-        pl.UInt8,
-        pl.UInt16,
-        pl.UInt32,
-        pl.UInt64,
-        pl.Float32,
-        pl.Float64,
-    ]
-
-    converted_dfs = []
-    for df in dfs:
-        new_columns = []
-        if df is not None:
-            for col in df:
-                if col.dtype in numeric_types:
-                    new_columns.append(col.cast(pl.Float32).alias(col.name))
-                else:
-                    new_columns.append(col)
-            converted_df = df.with_columns(new_columns)
-            converted_dfs.append(converted_df)
-    return converted_dfs
-
     
 def comparisons(
         model,
@@ -56,13 +29,14 @@ def comparisons(
         hypothesis = None,
         equivalence = None,
         transform = None,
+        wts = None,
         eps = 1e-4):
 
     V = sanitize_vcov(vcov, model)
-    newdata = sanitize_newdata(model, newdata)
+    newdata = sanitize_newdata(model, newdata, wts)
 
     # after sanitize_newdata() 
-    variables = sanitize_variables(variables=variables, model=model, newdata=newdata, comparison=comparison, eps=eps, by=by)
+    variables = sanitize_variables(variables=variables, model=model, newdata=newdata, comparison=comparison, eps=eps, by=by, wts=wts)
 
     # pad for character/categorical variables in patsy
     pad = []
@@ -119,7 +93,7 @@ def comparisons(
 
     baseline = nd.clone()
 
-    def inner(coefs, by, hypothesis):
+    def inner(coefs, by, hypothesis, wts, eps):
 
         # we don't want a pandas series
         try:
@@ -141,7 +115,7 @@ def comparisons(
         else:
             by = ["term", "contrast"]
 
-        def applyfun(x, by):
+        def applyfun(x, by, wts, eps):
             comp = x["marginaleffects_comparison"][0]
             xvar = x[x["term"][0]]
             est = estimands[comp](
@@ -150,6 +124,7 @@ def comparisons(
                 eps = eps,
                 x = xvar,
                 y = x["predicted"],
+                w = x[wts],
             )
             if est.shape[0] == 1:
                 est = est.item()
@@ -160,7 +135,7 @@ def comparisons(
                 tmp = x.with_columns(pl.lit(est).alias("estimate"))
             return tmp 
 
-        applyfun_outer = lambda x: applyfun(x, by = by)
+        applyfun_outer = lambda x: applyfun(x, by = by, wts = wts, eps = eps)
 
         # maintain_order is extremely important
         tmp = tmp.groupby(by, maintain_order = True).apply(applyfun_outer)
@@ -169,7 +144,7 @@ def comparisons(
 
         return tmp 
 
-    outer = lambda x: inner(x, by = by, hypothesis = hypothesis)
+    outer = lambda x: inner(x, by = by, eps = eps, wts = wts, hypothesis = hypothesis)
 
     out = outer(model.params.to_numpy())
 
