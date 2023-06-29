@@ -15,4 +15,4 @@ df, df_r = rdatasets("HistData", "Guerry", r = True)
 mod_py = smf.ols("Literacy ~ Pop1831 * Desertion", df).fit()
 mod_r = stats.lm("Literacy ~ Pop1831 * Desertion", data = df_r)
 
-comparisons(mod_py, wts = "Wealth")
+comparisons(mod_py)

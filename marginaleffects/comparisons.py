@@ -115,7 +115,7 @@ def comparisons(
         else:
             by = ["term", "contrast"]
 
-        def applyfun(x, by, wts, eps):
+        def applyfun(x, by, wts = None, eps = None):
             comp = x["marginaleffects_comparison"][0]
             xvar = x[x["term"][0]]
             est = estimands[comp](
@@ -135,7 +135,7 @@ def comparisons(
                 tmp = x.with_columns(pl.lit(est).alias("estimate"))
             return tmp 
 
-        applyfun_outer = lambda x: applyfun(x, by = by, wts = wts, eps = eps)
+        applyfun_outer = lambda x: applyfun(x, by = by)
 
         # maintain_order is extremely important
         tmp = tmp.groupby(by, maintain_order = True).apply(applyfun_outer)
