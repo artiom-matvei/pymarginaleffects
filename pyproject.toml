@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "marginaleffects"
-version = "0.0.4.9000"
+version = "0.0.4.9001"
 description = ""
 authors = ["Vincent Arel-Bundock <vincent.arel-bundock@umontreal.ca>"]
 readme = "README.md"
@@ -16,7 +16,6 @@ scipy = ">1.10.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
-exclude = ["tests"]
 jupyter = "^1.0.0"
 mkdocs = "^1.4.3"
 mkdocs-material = "^9.1.17"
@@ -38,7 +37,3 @@ build-backend = "poetry.core.masonry.api"
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]
-
-[tool.ruff]
-exclude = ["marginaleffects/__init__.py", "tests"]
-extend-ignore = ["E501"]
