@@ -1,7 +1,20 @@
 import numpy as np
 import polars as pl
-import * from utils
-from predictions import predictions
+from marginaleffects.utils import *
+from marginaleffects import predictions
+
+def inferences(x, method="conformal_cv+", R=10, conformal_test=None, conformal_calibration=None, conformal_score="residual_abs"):
+    assert conformal_score in ["residual_abs", "residual_sq", "softmax"]
+    assert method in ["conformal_cv+", "conformal_split"]
+    assert R <= 25
+    if method == "conformal_cv+":
+        out = conformal_cv_plus(x, test=conformal_test, R=R, score=conformal_score, conf_level=0.95) 
+    else:
+        conformal_split(x, test=conformal_test, calibration=conformal_calibration, score=conformal_score, conf_level=0.95)
+    return 2.
+
+
+
 
 def get_conformal_score(x, score):
     response_name = x.model.model.endog_names
@@ -72,13 +85,14 @@ def conformal_split(x, test, calibration, score, conf_level):
 
 def conformal_cv_plus(x, test, R, score, conf_level):
     # cross-validation
-    train = get_modeldata(x.model)
-    idx = np.array_split(np.random.permutation(range(train.shape[0]), R)
+    train = get_modeldata(x.call_args["model"])
+    idx = np.array_split(np.random.permutation(range(train.shape[0])), R)
     scores = []
     for i in idx:
-        data_cv = train.drop(i)
+        not_i = [x for x in range(train.shape[0]) if x not in i]
+        data_cv = train.rows(not_i)
         # re-fit the original model on training sets withholding the CV fold
-        model_cv = update(x["model"], data=data_cv)
+        # model_cv = call_args["model"]update(x["model"], data=data_cv)
         # use the updated model to make out-of-fold predictions
         # call_cv is the `predictions()` call, which we re-evaluate in-fold: newdata=train[i,]
         call_cv = x["call"].copy()
