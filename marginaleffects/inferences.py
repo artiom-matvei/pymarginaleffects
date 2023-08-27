@@ -94,16 +94,16 @@ def conformal_cv_plus(x, test, R, score, conf_level):
         # re-fit the original model on training sets withholding the CV fold
         # model_cv = call_args["model"]update(x["model"], data=data_cv)
         # use the updated model to make out-of-fold predictions
-        # call_cv is the `predictions()` call, which we re-evaluate in-fold: newdata=train[i,]
-        call_cv = x["call"].copy()
-        call_cv["model"] = model_cv
-        call_cv["newdata"] = train.loc[i]
+        call_cv = x["call_args"]
+        f = call_cv["model"].model.formula
+        call_cv["model"] = call_cv["model"].model.from_formula(f, data_cv).fit()
+        call_cv["newdata"] = train
         call_cv["vcov"] = False  # faster
-        pred_cv = predictions(call_cv)
-        # save the scores form each fold
+        pred_cv = predictions(**call_cv)
         scores.append(get_conformal_score(pred_cv, score=score))
 
     # test
-    out = x["call"].copy()
+    out = x["call_args"]
     out["newdata"] = test
-    return get_conformal_bounds(out, score=np.concatenate(scores), conf_level=conf_level)
+    out = predictions(**out)
+    return get_conformal_bounds(out, score=scores, conf_level=conf_level)
