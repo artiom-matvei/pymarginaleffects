@@ -1,11 +1,12 @@
 import polars as pl
 
 class MarginaleffectsDataFrame(pl.DataFrame):
-    def __init__(self, data=None, by=None, conf_level=0.95):
+    def __init__(self, data=None, by=None, conf_level=0.95, call_args=None):
         if isinstance(data, pl.DataFrame):
             self._df = data._df
             self.by = by
             self.conf_level = conf_level
+            self.call_args = call_args
             return
         super().__init__(data)
 

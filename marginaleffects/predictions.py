@@ -88,7 +88,18 @@ def predictions(
         - conf_low: lower bound of the confidence interval (or equal-tailed interval for Bayesian models)
         - conf_high: upper bound of the confidence interval (or equal-tailed interval for Bayesian models)
     """
-    pass
+
+    call_args = {
+        "model": model,
+        "conf_level": conf_level,
+        "vcov": vcov,
+        "by": by,
+        "newdata": newdata,
+        "hypothesis": hypothesis,
+        "equivalence": equivalence,
+        "transform": transform,
+        "wts": wts
+    }
 
     # sanity checks
     by = sanitize_by(by)
@@ -135,7 +146,7 @@ def predictions(
     if "rowid" in out.columns and pad.shape[0] > 0:
         out = out[:-pad.shape[0]:]
 
-    out = MarginaleffectsDataFrame(out, by=by, conf_level=conf_level)
+    out = MarginaleffectsDataFrame(out, by=by, conf_level=conf_level, call_args=call_args)
     return out
 
 
