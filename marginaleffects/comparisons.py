@@ -100,7 +100,7 @@ def comparisons(
     by = sanitize_by(by)
     V = sanitize_vcov(vcov, model)
     newdata = sanitize_newdata(model, newdata=newdata, wts=wts, by=by)
-    modeldata = get_modeldata(model)
+    modeldata = get_modeldata(model, newdata)
 
     # after sanitize_newdata()
     variables = sanitize_variables(
@@ -144,7 +144,11 @@ def comparisons(
         )
 
     # we must pad with *all* variables in the model, not just the ones in the `variables` argument
-    vars = [re.sub("\[.*", "", x) for x in model.model.exog_names]
+    try:
+        en = model.model.exog_names
+    except:
+        en = model.model.exog.vars
+    vars = [re.sub("\[.*", "", x) for x in en]
     vars = list(set(vars))
     for v in vars:
         if v in modeldata.columns:

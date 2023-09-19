@@ -7,8 +7,11 @@ def find_response(model):
     return model.model.endog_names
 
 
-def get_modeldata(fit):
-    df = fit.model.data.frame
+def get_modeldata(fit, newdata=None):
+    try:
+        df = fit.model.data.frame
+    except:
+        df = newdata
     try:
         out = pl.from_pandas(df)
     except:

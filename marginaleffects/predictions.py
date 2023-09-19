@@ -96,7 +96,7 @@ def predictions(
     newdata = sanitize_newdata(model, newdata, wts=wts, by=by)
 
     # pad
-    modeldata = get_modeldata(model)
+    modeldata = get_modeldata(model, newdata)
     pad = []
     vs = get_variables_names(variables = None, model = model, newdata = modeldata)
     for v in vs:

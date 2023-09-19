@@ -14,7 +14,12 @@ from .utils import get_modeldata, get_variable_type
 def sanitize_vcov(vcov, model):
     if isinstance(vcov, bool):
         if vcov is True:
-            V = model.cov_params()
+            if hasattr(model, "cov_params"):
+                V = model.cov_params()
+            elif hasattr(model, "cov"):
+                V = model.cov()
+            else:
+                V = None
         else:
             V = None
     elif isinstance(vcov, str):
@@ -50,7 +55,7 @@ def sanitize_by(by):
 
 
 def sanitize_newdata(model, newdata, wts, by = []):
-    modeldata = get_modeldata(model)
+    modeldata = get_modeldata(model, newdata)
 
     if newdata is None:
         out = modeldata
@@ -81,7 +86,12 @@ def sanitize_newdata(model, newdata, wts, by = []):
             raise ValueError(f"`newdata` does not have a column named '{wts}'.")
 
     xnames = get_variables_names(variables=None, model=model, newdata=out)
-    ynames = model.model.data.ynames
+    try:
+        ynames = model.model.data.ynames
+    except:
+        # `linearmodels` package
+        ynames = model.model.dependent.vars
+
     if isinstance(ynames, str):
         ynames = [ynames]
     cols = [x for x in xnames + ynames if x in out.columns]
@@ -297,7 +307,11 @@ def get_one_variable_hi_lo(variable, value, newdata, comparison, eps, by, wts=No
 
 def get_variables_names(variables, model, newdata):
     if variables is None:
-        variables = model.model.exog_names
+        try:
+            variables = model.model.exog_names
+        # linearmodels package
+        except:
+            variables = model.model.exog.vars
         variables = [re.sub("\[.*\]", "", x) for x in variables]
         variables = [x for x in variables if x in newdata.columns]
         variables = pl.Series(variables).unique().to_list()
@@ -413,7 +427,7 @@ def get_categorical_combinations(
 def sanitize_variables(variables, model, newdata, comparison, eps, by, wts=None):
     out = []
 
-    modeldata = get_modeldata(model)
+    modeldata = get_modeldata(model, newdata)
 
     if variables is None:
         vlist = get_variables_names(variables, model, newdata)

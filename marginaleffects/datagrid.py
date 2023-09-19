@@ -58,7 +58,7 @@ def datagrid(
         raise ValueError("One of model or newdata must be specified")
 
     if newdata is None:
-        newdata = get_modeldata(model)
+        newdata = get_modeldata(model, newdata)
 
     out = {}
     for key, value in kwargs.items():
@@ -116,7 +116,7 @@ def datagridcf(model=None, newdata=None, **kwargs):
         raise ValueError("One of model or newdata must be specified")
 
     if newdata is None:
-        newdata = get_modeldata(model)
+        newdata = get_modeldata(model, newdata)
 
     if "rowid" not in newdata.columns:
         newdata = newdata.with_columns(pl.Series(range(newdata.shape[0])).alias("rowid"))
