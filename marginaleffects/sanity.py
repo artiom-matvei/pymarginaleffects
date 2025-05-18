@@ -541,6 +541,8 @@ def sanitize_variables(variables, model, newdata, comparison, eps, by, wts=None)
 def sanitize_hypothesis_null(hypothesis):
     if isinstance(hypothesis, (int, float)):
         hypothesis_null = hypothesis
+    elif isinstance(hypothesis, str) and hypothesis.split()[0] == "ratio":
+        hypothesis_null = 1
     else:
         hypothesis_null = 0
     return hypothesis_null
